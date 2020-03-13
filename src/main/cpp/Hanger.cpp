@@ -6,5 +6,9 @@
 /*----------------------------------------------------------------------------*/
 
 #include "Hanger.h"
+#include <frc/VictorSP.h>
 
-Hanger::Hanger() {}
+Hanger::Hanger()
+{
+    
+}

@@ -1,20 +1,36 @@
 
 #include "Robot.h"
-#include "MecanumDrive.h"
+#include "MyMecanumDrive.h"
+#include "Hanger.h"
+#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/Joystick.h>
 #include <iostream>
 
 #include <frc/smartdashboard/SmartDashboard.h>
 
+//Motors
+
+
+//Joysticks
 frc::Joystick Xbox {0};
-double XboxLX = 0;
-double XboxLY = 0;
-double XboxRX = 0;
+double xboxLX = 0;
+double xboxLY = 0;
+double xboxRX = 0;
+
+frc::Joystick Yoke {1};
+
+//Variables
+
+
+//Class Objects
+MyMecanumDrive *myMecanumDrive;
 
 void Robot::RobotInit() {
   m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
   m_chooser.AddOption(kAutoNameCustom, kAutoNameCustom);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
+  myMecanumDrive = new MyMecanumDrive();
 }
 
 void Robot::RobotPeriodic() {}
@@ -49,7 +65,7 @@ void Robot::AutonomousPeriodic()
 
 void Robot::TeleopInit()
 {
-  
+  myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
 }
 
 void Robot::TeleopPeriodic()
@@ -64,9 +80,9 @@ void Robot::TestPeriodic()
 
 void Robot::ReadXbox()
 {
-  XboxLX = Xbox.GetRawAxis(0);
-  XboxLY = Xbox.GetRawAxis(1);
-  XboxRX = Xbox.GetRawAxis(4);
+  xboxLX = Xbox.GetRawAxis(0);
+  xboxLY = Xbox.GetRawAxis(1);
+  xboxRX = Xbox.GetRawAxis(4);
 }
 
 #ifndef RUNNING_FRC_TESTS
