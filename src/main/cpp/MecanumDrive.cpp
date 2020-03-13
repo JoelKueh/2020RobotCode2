@@ -22,5 +22,5 @@ MecanumDrive::MecanumDrive()
 
 MecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRX)
 {   
-
+    Mecanums.DriveCartesian(xboxRX , xboxLX);
 }
