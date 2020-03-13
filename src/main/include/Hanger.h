@@ -10,4 +10,5 @@
 class Hanger {
  public:
   Hanger();
+  void RunHanger(double yokeX, double yokeY);
 };

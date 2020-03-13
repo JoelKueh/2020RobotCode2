@@ -23,4 +23,5 @@ class Robot : public frc::TimedRobot {
   std::string m_autoSelected;
 
   void ReadXbox();
+  void ReadYoke();
 };
