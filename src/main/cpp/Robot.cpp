@@ -2,10 +2,11 @@
 #include "Robot.h"
 #include "MyMecanumDrive.h"
 #include "Hanger.h"
+// #include "ManualIntake.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/Joystick.h>
 #include <iostream>
-
+//#include <frc/PWMSpeedController.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
 //Motors
@@ -16,16 +17,24 @@ frc::Joystick Xbox {0};
 double xboxLX = 0;
 double xboxLY = 0;
 double xboxRX = 0;
+bool xboxA = 0;
+bool xboxRB = 0;
 
 frc::Joystick Yoke {1};
 double yokeX = 0;
 double yokeY = 0;
+bool yokeUp = 0;
+bool yokeDown = 0;
+bool yokeLeft = 0;
+bool yokeRight = 0;
 
 //Variables
 
 
 //Class Objects
 MyMecanumDrive *myMecanumDrive;
+Hanger *hanger;
+ManualIntake *manualIntake;
 
 void Robot::RobotInit() {
   m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
@@ -70,13 +79,16 @@ void Robot::AutonomousPeriodic()
 //Runs once. What the robot does when Teleop starts
 void Robot::TeleopInit()
 {
-  myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
+
 }
 
 //What the robot does when we gain controll
 void Robot::TeleopPeriodic()
 {
   //Classes and objects for managability
+  myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
+  hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
+  manualIntake->RunManualIntake(xboxA, xboxRB);
 
   //Reading Inputs and setting them to variables to save up resources.
   ReadXbox();
@@ -91,21 +103,30 @@ void Robot::TestPeriodic()
 void Robot::ReadXbox()
 {
   xboxLX = Xbox.GetRawAxis(0);
-  if(xboxLX < .1 && xboxLX > -.1)
+  if(xboxLX < .2 && xboxLX > -.2)
   {
     xboxLX = 0;
   }
 
   xboxLY = Xbox.GetRawAxis(1);
-  if(xboxLY < .1 && xboxLY > -.1)
+  if(xboxLY < .2 && xboxLY > -.2)
   {
     xboxLY = 0;
   }
 
   xboxRX = Xbox.GetRawAxis(4);
-  if(xboxRX < .1 && xboxRX > -.1)
+  if(xboxRX < .2 && xboxRX > -.2)
   {
     xboxRX = 0;
+  }
+
+  // xboxPOV = Xbox.GetPOV();
+
+  xboxA = Xbox.GetRawButton(1);
+
+  if(Xbox.GetRawButtonPressed(6))
+  {
+    xboxRB = !xboxRB;
   }
 }
 
@@ -116,12 +137,17 @@ void Robot::ReadYoke()
   {
     yokeX = 0;
   }
-  
+
   yokeY = Yoke.GetRawAxis(2);
   if(yokeY < .1 && yokeY > -.1)
   {
     yokeY = 0;
   }
+
+  yokeUp = Yoke.GetRawButton(3);
+  yokeDown = Yoke.GetRawButton(2);
+  yokeRight = Yoke.GetRawButton(5);
+  yokeLeft = Yoke.GetRawButton(4);
 }
 
 #ifndef RUNNING_FRC_TESTS
