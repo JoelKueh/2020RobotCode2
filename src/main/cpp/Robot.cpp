@@ -2,7 +2,7 @@
 #include "Robot.h"
 #include "MyMecanumDrive.h"
 #include "Hanger.h"
-// #include "ManualIntake.h"
+#include "ManualIntake.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/Joystick.h>
 #include <iostream>
