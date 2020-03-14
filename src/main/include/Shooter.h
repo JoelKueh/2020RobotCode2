@@ -10,4 +10,5 @@
 class Shooter {
  public:
   Shooter();
+  void RunShooter();
 };
