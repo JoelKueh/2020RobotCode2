@@ -9,7 +9,7 @@
 //#include <frc/PWMSpeedController.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
-//Motors
+//Motor Controllers
 
 
 //Joysticks and their inputs (Axes set to doubles because they are decimals)
@@ -133,13 +133,13 @@ void Robot::ReadXbox()
 void Robot::ReadYoke()
 {
   yokeX = Yoke.GetRawAxis(0);
-  if(yokeX < .1 && yokeX > -.1)
+  if(yokeX < .2 && yokeX > -.2)
   {
     yokeX = 0;
   }
 
   yokeY = Yoke.GetRawAxis(2);
-  if(yokeY < .1 && yokeY > -.1)
+  if(yokeY < .2 && yokeY > -.2)
   {
     yokeY = 0;
   }
