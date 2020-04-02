@@ -10,4 +10,5 @@
 class PixyCam {
  public:
   PixyCam();
+  double GetVal(); // Maybe
 };

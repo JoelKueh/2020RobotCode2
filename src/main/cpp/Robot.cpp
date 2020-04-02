@@ -3,6 +3,9 @@
 #include "MyMecanumDrive.h"
 #include "Hanger.h"
 #include "ManualIntake.h"
+#include "AutoShooter.h"
+#include "AutoIntake.h"
+#include "PixyCam.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/Joystick.h>
 #include <iostream>
