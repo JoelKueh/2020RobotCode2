@@ -1,16 +1,27 @@
 
 #include "Robot.h"
+
+//Both Manual and Auto Classes
 #include "MyMecanumDrive.h"
 #include "Hanger.h"
+
+//Manual Classes
 #include "ManualIntake.h"
-#include "AutoShooter.h"
+//#include "ManualShooter.h"
+
+//Auto Classes
 #include "AutoIntake.h"
+#include "AutoAim.h"
+#include "AutoShooter.h"
 #include "PixyCam.h"
+
+//Libraries and Other things
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/Joystick.h>
 #include <iostream>
 //#include <frc/PWMSpeedController.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/DigitalInput.h>
 
 //Motor Controllers
 
@@ -20,16 +31,24 @@ frc::Joystick Xbox {0};
 double xboxLX = 0;
 double xboxLY = 0;
 double xboxRX = 0;
-bool xboxA = 0;
-bool xboxRB = 0;
+bool xboxA = false;
+bool xboxYRaw = false
+bool xboxYToggle = false;
+bool xboxRBSwitch = false;
 
 frc::Joystick Yoke {1};
 double yokeX = 0;
 double yokeY = 0;
-bool yokeUp = 0;
-bool yokeDown = 0;
-bool yokeLeft = 0;
-bool yokeRight = 0;
+bool yokeUp = false;
+bool yokeDown = false;
+bool yokeLeft = false;
+bool yokeRight = false;
+
+//Digital Inputs
+frc::DigitalInput TurretLeftLimit {3};
+bool turretLeftLimit = 0;
+frc::DigitalInput TurretRightLimit {4};
+bool turretRightLimit = 0;
 
 //Variables
 
@@ -37,14 +56,26 @@ bool yokeRight = 0;
 //Class Objects
 MyMecanumDrive *myMecanumDrive;
 Hanger *hanger;
+
 ManualIntake *manualIntake;
+
+PixyCam *pixyCam;
+AutoAim *autoAim;
+AutoShooter *autoShooter;
 
 void Robot::RobotInit() {
   m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
   m_chooser.AddOption(kAutoNameCustom, kAutoNameCustom);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
+  //Why do we need this?
   myMecanumDrive = new MyMecanumDrive();
+  hanger = new Hanger();
+
+  manualIntake = new ManualIntake();
+  
+  pixyCam = new PixyCam();
+  autoShooter = new AutoShooter();
 }
 
 void Robot::RobotPeriodic() {}
@@ -91,7 +122,17 @@ void Robot::TeleopPeriodic()
   //Classes and objects for managability
   myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
   hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
-  manualIntake->RunManualIntake(xboxA, xboxRB);
+  manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
+  autoAim->RunAutoAim();
+  autoShooter->RunAutoShooter();
+
+  if(xboxYToggle)
+  {
+    pixyCam->GetStr();
+    pixyCam->GetValX();
+    pixyCam->GetValY();
+    
+  }
 
   //Reading Inputs and setting them to variables to save up resources.
   ReadXbox();
@@ -126,10 +167,15 @@ void Robot::ReadXbox()
   // xboxPOV = Xbox.GetPOV();
 
   xboxA = Xbox.GetRawButton(1);
+  
+  if(!xboxYToggle && Xbox.GetRawButton(4))
+  {
+    xboxYToggle = true;
+  }
 
   if(Xbox.GetRawButtonPressed(6))
   {
-    xboxRB = !xboxRB;
+    xboxRBSwitch = !xboxRBSwitch;
   }
 }
 

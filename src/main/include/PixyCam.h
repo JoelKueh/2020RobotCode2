@@ -7,8 +7,13 @@
 
 #pragma once
 
-class PixyCam {
+class PixyCam
+{
  public:
   PixyCam();
-  double GetVal(); // Maybe
+  void GetStr();
+  void ClearPixyStr();
+  bool InputFinished();
+  int GetValX();
+  int GetValY();
 };

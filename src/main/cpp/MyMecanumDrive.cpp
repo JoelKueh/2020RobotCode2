@@ -19,5 +19,8 @@ MyMecanumDrive::MyMecanumDrive()
 
 void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRX)
 {   
-    Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRX);
+    if(xboxLX != 0 && xboxLY != 0 && xboxRX !=0)
+    {
+        Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRX);
+    }
 }

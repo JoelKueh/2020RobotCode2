@@ -18,27 +18,27 @@ ManualIntake::ManualIntake()
     IntakeIn.SetPulseDuration(.1);
 }
 
-void ManualIntake::RunManualIntake(bool xboxA, bool xboxRB)
+void ManualIntake::RunManualIntake(bool xboxA, bool xboxRBSwitch)
 {
-    if(xboxRB)
+    if(xboxRBSwitch)
     {
         IntakeOut.StartPulse();
         IntakeMotor.Set(frc::Relay::kOn);
-
-        if(xboxA)
-        {
-            ElevatorTop.Set(-.5);
-            ElevatorBottom.Set(.5);
-        }
-        else
-        {
-            ElevatorTop.Set(0);
-            ElevatorBottom.Set(0);
-        }
     }
     else
     {
         IntakeIn.StartPulse();
         IntakeMotor.Set(frc::Relay::kOff);
+    }
+
+    if(xboxA)
+    {
+        ElevatorTop.Set(-.5);
+        ElevatorBottom.Set(.5);
+    }
+    else
+    {
+        ElevatorTop.Set(0);
+        ElevatorBottom.Set(0);
     }
 }

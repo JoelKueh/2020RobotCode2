@@ -10,4 +10,5 @@
 class ManualShooter {
  public:
   ManualShooter();
+  void RunManualShooter(double yokeX, double yokeY);
 };

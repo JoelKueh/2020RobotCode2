@@ -1,15 +1,12 @@
 
 #include "AutoShooter.h"
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h>
-#include <frc/PIDController.h>
-#include <frc/PIDBase.h>
-#include <frc/PIDSource.h>
-#include <frc/PIDInterface.h>
-#include <frc/PIDOutput.h>
 #include <frc/Encoder.h>
+#include <frc2/command/PIDCommand.h>
+#include <frc2/command/PIDSubsystem.h>
 
-ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterTop;
-ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterBottom;
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterTop {1};
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterBottom {2};
 
 frc::Encoder ShooterTopEncoder(10, 12, false, frc::CounterBase::EncodingType::k4X);
 int shooterTopDistance;
@@ -23,8 +20,9 @@ frc::Encoder ShooterRaiseEncoder(17, 18, false, frc::CounterBase::EncodingType::
 int shooterRaiseDistance;
 int shooterRaiseRate;
 
-frc::PIDController shooterTopPID(.8, .1, .1, ShooterTopEncoder, ShooterTop);
-frc::PIDController shooterBottomPID(.8, .1, .1, ShooterBottomEncoder, ShooterBottom);
+// New, Good PID
+frc2::PIDController shooterTopPID(.1, .1, .1);
+frc2::PIDController shooterBottomPID(.1, .1, .1);
 
 AutoShooter::AutoShooter()
 {

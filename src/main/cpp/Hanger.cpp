@@ -8,18 +8,18 @@ frc::VictorSP HangerRaise {4};
 frc::VictorSP HangerBalance {3};
 
 //DigitalInputs and Corresponding Variables
-frc::DigitalInput HangerBottomLimit {5};
-bool hangerBottomLimit;
-frc::DigitalInput HangerTopLimit {6};
-bool hangerTopLimit;
+frc::DigitalInput HangerLLimit {5};
+bool hangerLLimit = 0;
+frc::DigitalInput HangerRLimit {6};
+bool hangerRLimit = 0;
 
 Hanger::Hanger()
 {
-    hangerBottomLimit = HangerBottomLimit.Get();
-    hangerTopLimit = HangerTopLimit.Get();
+    hangerLLimit = HangerLLimit.Get();
+    hangerRLimit = HangerRLimit.Get();
 }
 
-void Hanger::RunHanger(bool yokeUp, bool yokeDown, bool yokeLeft, bool yokeRight)
+void Hanger::RunHanger(bool yokeUp, bool yokeDown)
 {
     if(yokeUp)
     {
@@ -34,11 +34,11 @@ void Hanger::RunHanger(bool yokeUp, bool yokeDown, bool yokeLeft, bool yokeRight
         HangerRaise.Set(0);
     }
     
-    if(yokeLeft)
+    if(hangerRLimit)
     {
         HangerBalance.Set(1);
     }
-    else if(yokeRight)
+    else if(hangerLLimit)
     {
         HangerBalance.Set(-1);
     }
