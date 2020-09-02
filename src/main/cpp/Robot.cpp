@@ -110,7 +110,7 @@ void Robot::AutonomousPeriodic()
   }
 }
 
-//Runs once. What the robot does when Teleop starts
+//Runs once. What the robot does to initiate Teleop
 void Robot::TeleopInit()
 {
 
@@ -119,22 +119,22 @@ void Robot::TeleopInit()
 //What the robot does when we gain controll
 void Robot::TeleopPeriodic()
 {
-  //Classes and objects for managability
+  //Loading the classes up to be used. Somewhat like calling a function.
   myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
-  hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
-  manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
-  autoAim->RunAutoAim();
-  autoShooter->RunAutoShooter();
+  //hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
+  //manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
+  //autoAim->RunAutoAim();
+  //autoShooter->RunAutoShooter();
 
-  if(xboxYToggle)
-  {
-    pixyCam->GetStr();
-    pixyCam->GetValX();
-    pixyCam->GetValY();
+  // if(xboxYToggle)
+  // {
+  //   pixyCam->GetStr();
+  //   pixyCam->GetValX();
+  //   pixyCam->GetValY();
     
-  }
+  // }
 
-  //Reading Inputs and setting them to variables to save up resources.
+  //Running a functions that read inputs and sets them to variables to save up resources.
   ReadXbox();
   ReadYoke();
 }
