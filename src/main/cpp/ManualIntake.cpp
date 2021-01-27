@@ -33,8 +33,8 @@ void ManualIntake::RunManualIntake(bool xboxA, bool xboxRBSwitch)
 
     if(xboxA)
     {
-        ElevatorTop.Set(-.5);
-        ElevatorBottom.Set(.5);
+        ElevatorTop.Set(-.65);
+        ElevatorBottom.Set(.65);
     }
     else
     {

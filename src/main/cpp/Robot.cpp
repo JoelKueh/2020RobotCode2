@@ -7,13 +7,14 @@
 
 //Manual Classes
 #include "ManualIntake.h"
-//#include "ManualShooter.h"
 
 //Auto Classes
 #include "AutoIntake.h"
 #include "AutoAim.h"
-#include "AutoShooter.h"
 #include "PixyCam.h"
+
+//Turret Class
+#include "Turret.h"
 
 //Libraries and Other things
 #include <frc/smartdashboard/SmartDashboard.h>
@@ -32,13 +33,14 @@ double xboxLX = 0;
 double xboxLY = 0;
 double xboxRX = 0;
 bool xboxA = false;
-bool xboxYRaw = false
+bool xboxYRaw = false; 
 bool xboxYToggle = false;
 bool xboxRBSwitch = false;
 
 frc::Joystick Yoke {1};
 double yokeX = 0;
 double yokeY = 0;
+double yokeWheel = 0;
 bool yokeUp = false;
 bool yokeDown = false;
 bool yokeLeft = false;
@@ -61,7 +63,7 @@ ManualIntake *manualIntake;
 
 PixyCam *pixyCam;
 AutoAim *autoAim;
-AutoShooter *autoShooter;
+Turret *turret;
 
 void Robot::RobotInit() {
   m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
@@ -75,7 +77,7 @@ void Robot::RobotInit() {
   manualIntake = new ManualIntake();
   
   pixyCam = new PixyCam();
-  autoShooter = new AutoShooter();
+  turret = new Turret();
 }
 
 void Robot::RobotPeriodic() {}
@@ -121,10 +123,11 @@ void Robot::TeleopPeriodic()
 {
   //Loading the classes up to be used. Somewhat like calling a function.
   myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
-  //hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
-  //manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
-  //autoAim->RunAutoAim();
-  //autoShooter->RunAutoShooter();
+  // hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
+  // manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
+  
+  // autoAim->RunAutoAim(); // TODO
+  turret->RunManualTurret(xboxYToggle);
 
   // if(xboxYToggle)
   // {
@@ -136,7 +139,7 @@ void Robot::TeleopPeriodic()
 
   //Running a functions that read inputs and sets them to variables to save up resources.
   ReadXbox();
-  ReadYoke();
+  //ReadYoke();
 }
 
 void Robot::TestPeriodic()
@@ -168,9 +171,9 @@ void Robot::ReadXbox()
 
   xboxA = Xbox.GetRawButton(1);
   
-  if(!xboxYToggle && Xbox.GetRawButton(4))
+  if(Xbox.GetRawButtonPressed(4))
   {
-    xboxYToggle = true;
+    xboxYToggle = !xboxYToggle;
   }
 
   if(Xbox.GetRawButtonPressed(6))
@@ -192,6 +195,8 @@ void Robot::ReadYoke()
   {
     yokeY = 0;
   }
+
+  yokeWheel = Yoke.GetRawAxis(2);
 
   yokeUp = Yoke.GetRawButton(3);
   yokeDown = Yoke.GetRawButton(2);

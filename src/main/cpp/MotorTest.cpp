@@ -1,12 +1,12 @@
-
-#include "AutoShooter.h"
+#include "MotorTest.h"
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h>
+#include <frc/VictorSP.h>
 #include <frc/Encoder.h>
-#include <frc2/command/PIDCommand.h>
-#include <frc2/command/PIDSubsystem.h>
 
-ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterTop {1};
-ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterBottom {2};
+/*
+//Shooter Moters
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterTop {5};
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX ShooterBottom {6};
 
 frc::Encoder ShooterTopEncoder(10, 12, false, frc::CounterBase::EncodingType::k4X);
 int shooterTopDistance;
@@ -20,16 +20,11 @@ frc::Encoder ShooterRaiseEncoder(17, 18, false, frc::CounterBase::EncodingType::
 int shooterRaiseDistance;
 int shooterRaiseRate;
 
-// New, Good PID
-frc2::PIDController shooterTopPID(.1, .1, .1);
-frc2::PIDController shooterBottomPID(.1, .1, .1);
+//Hanger Motors RIP
+frc::VictorSP HangerRaise {4};
+//frc::VictorSP HangerBalance {3};
 
-AutoShooter::AutoShooter()
-{
+//
 
-}
-
-void AutoShooter::RunAutoShooter()
-{
-
-}
+MotorTest::MotorTest() {}
+*/

@@ -1,12 +1,12 @@
-
 #include "MyMecanumDrive.h"
 #include <frc/drive/MecanumDrive.h>
 #include <ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h>
+#include "WiringDiagram.h"
 
-ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelBackLeft {3};
-ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelBackRight {4};
-ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelFrontRight {2};
-ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelFrontLeft {1};
+ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelBackLeft {WiringDiagram::wheelBackLeftPort};
+ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelBackRight {WiringDiagram::wheelBackRightPort};
+ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelFrontRight {WiringDiagram::wheelFrontRightPort};
+ctre::phoenix::motorcontrol::can::WPI_VictorSPX WheelFrontLeft {WiringDiagram::wheelFrontLeftPort};
 
 frc::MecanumDrive Mecanums {WheelFrontLeft , WheelBackLeft , WheelFrontRight , WheelBackRight};
 
@@ -17,10 +17,7 @@ MyMecanumDrive::MyMecanumDrive()
     WheelBackLeft.SetInverted(true);
 }
 
-void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRX)
+void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRY)
 {   
-    if(xboxLX != 0 && xboxLY != 0 && xboxRX !=0)
-    {
-        Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRX);
-    }
+    Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRY);
 }
