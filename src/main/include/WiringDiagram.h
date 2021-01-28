@@ -10,11 +10,11 @@ class WiringDiagram {
       static const int launcherBottomPort = 10;
 
     // DIO
-      static const int launcherTopEncoderA = 5;
-      static const int launcherTopEncoderB = 6;
+      static const int launcherTopEncoderA = 8;
+      static const int launcherTopEncoderB = 9;
       
-      static const int launcherBottomEncoderA = 4;
-      static const int launcherBottomEncoderB = 3;
+      static const int launcherBottomEncoderA = 1;
+      static const int launcherBottomEncoderB = 0;
 
     // CAN
       static const int turretRaisePort = 1;

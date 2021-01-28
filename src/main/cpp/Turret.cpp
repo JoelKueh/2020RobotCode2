@@ -9,13 +9,11 @@
 #include <iostream>
 #include <frc/Digitalinput.h>
 
-WiringDiagram *wiringDiagram;
-
 //ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRaise {turretRaisePort};
 //ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRotate {turretRotatePort};
 
 // DEBUG
-frc::DigitalInput TopA {wiringDiagram->launcherTopEncoderA};
+frc::DigitalInput TopA {WiringDiagram::launcherTopEncoderA};
 frc::DigitalInput TopB {WiringDiagram::launcherTopEncoderB};
 
 frc::DigitalInput BottomA {WiringDiagram::launcherBottomEncoderA};
@@ -81,8 +79,8 @@ void Turret::RunManualTurret(bool xboxYToggle)
         // std::cout << "Get Top: " << LauncherTopEncoder.Get() << std::endl;
         // std::cout << "Get Distance Per Pulse Top: " << LauncherTopEncoder.GetDistancePerPulse() << std::endl;
 
-        std::cout << "Top A: " << WiringDiagram::launcherTopPort << std::endl;
-        std::cout << "Top B: " << TopB.GetChannel() << std::endl;
+        std::cout << "Top A: " << TopA.Get() << std::endl;
+        std::cout << "Top B: " << TopB.Get() << std::endl;
 
         LauncherBottomMotor.Set(.30);
 
