@@ -17,7 +17,12 @@ MyMecanumDrive::MyMecanumDrive()
     WheelBackLeft.SetInverted(true);
 }
 
-void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRY)
+void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRX)
 {   
-    Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRY);
+    Mecanums.DriveCartesian(xboxLX , xboxLY , xboxRX);
+}
+
+void MyMecanumDrive::RunNormalWheels(double xboxLX, double xboxLY)
+{
+    Mecanums.DriveCartesian(0, xboxLY, xboxLX);
 }
