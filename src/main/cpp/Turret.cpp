@@ -34,7 +34,7 @@ int launcherTopRate;
 // 0 BLUE 1 Yellow 
 frc::Encoder LauncherBottomEncoder(WiringDiagram::launcherBottomEncoderA, 
     WiringDiagram::launcherBottomEncoderB, 
-    false, frc::CounterBase::EncodingType::k4X);
+    true, frc::CounterBase::EncodingType::k4X);
 
 int launcherBottomDistance;
 int launcherBottomRate;
@@ -52,6 +52,9 @@ int averageCount = 0;
 double averageTemporary = 0;
 double averageSpeed = 0;
 
+double topSetValue = 0;
+double bottomSetValue = 0;
+
 Turret::Turret()
 {
     //Setting required values for Top Encoder
@@ -68,6 +71,8 @@ Turret::Turret()
     turretTopPID.SetTolerance(50);
 
     turretBottomPID.SetTolerance(50);
+
+ 
 }
 
 void Turret::RunAutoTurret()
@@ -79,15 +84,13 @@ void Turret::RunManualTurret(bool xboxYToggle)
 {
     if(xboxYToggle)
     {
-        turretTopPID.SetSetpoint(3000);
-        double temporaryTop = turretTopPID.Calculate(LauncherTopEncoder.GetRate()) / 100;
-        LauncherTopMotor.Set(temporaryTop);
-        std::cout << "Get Top PID: " << temporaryTop << std::endl;
+        PersonalProportional();
 
-        turretBottomPID.SetSetpoint(3000);
-        double temporaryBottom = turretBottomPID.Calculate(LauncherBottomEncoder.GetRate()) / 100;
-        LauncherBottomMotor.Set(temporaryBottom);
-        std::cout << "Get Bottom PID: " << temporaryBottom << std::endl;
+        // PIDControll();
+        
+
+
+        // Debug
 
         averageTemporary = averageTemporary + LauncherBottomEncoder.GetRate();
         averageCount++;
@@ -96,8 +99,7 @@ void Turret::RunManualTurret(bool xboxYToggle)
             averageCount = 0;
             averageTemporary = 0;
         }
-        
-        // Debug
+
         // std::cout << "Raw Top: " << LauncherTopEncoder.GetRaw() << std::endl;
         // std::cout << "Distance Top: " << LauncherTopEncoder.GetDistance() << std::endl;
         // std::cout << "Get Top: " << averageSpeed << std::endl;
@@ -119,18 +121,55 @@ void Turret::RunManualTurret(bool xboxYToggle)
     }
     else
     {
-        //LauncherTopMotor.Set(launcherTopPID.Calculate(LauncherTopEncoder.GetDistance(), 0));
         LauncherTopMotor.Set(0);
         LauncherBottomMotor.Set(0);
-        
-        // std::cout << "Get Top: " << LauncherTopEncoder.GetRate() << std::endl;
-        
-        // std::cout << LauncherTopEncoder.GetStopped() << std::endl;
-        //sstd::cout << LauncherBottomEncoder.Get() << std::endl;
     }
 }
 
 bool Turret::Aim()
 {
     return false;
+}
+
+double Turret::ProportionalController(double inputValue, double percentSpeed, double setpoint, double sensitivity)
+{
+    double percentError = (setpoint - inputValue) / abs(setpoint);
+    return percentSpeed + percentError * sensitivity;
+}
+
+void Turret::PIDControll()
+{
+    turretTopPID.SetSetpoint(3000);
+    double temporaryTop = turretTopPID.Calculate(LauncherTopEncoder.GetRate()) / 100;
+    LauncherTopMotor.Set(temporaryTop);
+    std::cout << "Get Top PID: " << temporaryTop << std::endl;
+
+    turretBottomPID.SetSetpoint(3000);
+    double temporaryBottom = turretBottomPID.Calculate(LauncherBottomEncoder.GetRate()) / 100;
+    LauncherBottomMotor.Set(temporaryBottom);
+    std::cout << "Get Bottom PID: " << temporaryBottom << std::endl;
+}
+
+void Turret::PersonalProportional()
+{
+    int topRate = LauncherTopEncoder.GetRate();
+    int bottomRate = LauncherBottomEncoder.GetRate();
+
+    topSetValue = ProportionalController(topRate, topSetValue, -2000, .01);
+        if(topSetValue > 0)
+        {
+            topSetValue = 0;
+        }
+
+    bottomSetValue = ProportionalController(bottomRate, bottomSetValue, 2000, .01);
+        if(bottomSetValue < 0)
+        {
+            bottomSetValue = 0;
+        }
+
+    LauncherTopMotor.Set(topSetValue);
+    LauncherBottomMotor.Set(bottomSetValue);
+
+    std::cout << "Top Rate: " << topSetValue << " :: " << topRate << std::endl;
+    std::cout << "Bottom Rate: " << bottomSetValue << " :: " << bottomRate << std::endl;
 }

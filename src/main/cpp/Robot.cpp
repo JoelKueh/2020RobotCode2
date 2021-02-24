@@ -122,7 +122,7 @@ void Robot::TeleopInit()
 void Robot::TeleopPeriodic()
 {
   //Loading the classes up to be used. Somewhat like calling a function.
-  myMecanumDrive->RunNormalWheels(xboxLY, xboxLX);
+  myMecanumDrive->RunNormalWheels(xboxLX, xboxLY);
   // hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
   // manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
   
@@ -138,7 +138,7 @@ void Robot::TeleopPeriodic()
   // }
 
   // NOT USING MECANUMS, DO NOT UNCOMMENT THIS FUNCTION
-  myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
+  // myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
 
   //Running a functions that read inputs and sets them to variables to save up resources.
   ReadXbox();

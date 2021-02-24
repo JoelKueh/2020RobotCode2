@@ -24,5 +24,5 @@ void MyMecanumDrive::RunMecanums(double xboxLX, double xboxLY, double xboxRX)
 
 void MyMecanumDrive::RunNormalWheels(double xboxLX, double xboxLY)
 {
-    Mecanums.DriveCartesian(0, xboxLY, xboxLX);
+    Mecanums.DriveCartesian(xboxLX, xboxLY, 0);
 }
