@@ -16,6 +16,14 @@ class WiringDiagram {
       static const int launcherBottomEncoderA = 1;
       static const int launcherBottomEncoderB = 0;
 
+      static const int turretRaiseEncoderGreen = 13;
+      static const int turretRaiseEncoderYellow = 7;
+
+      static const int leftTurretLimitPort = 12;
+      static const int rightTurretLimitPort = 11;
+
+      static const int turretRaiseLimitPort = 2;
+
     // CAN
       static const int turretRaisePort = 1;
       static const int turretRotatePort = 2;

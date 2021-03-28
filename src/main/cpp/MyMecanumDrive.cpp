@@ -26,3 +26,11 @@ void MyMecanumDrive::RunNormalWheels(double xboxLX, double xboxLY)
 {
     Mecanums.DriveCartesian(xboxLX, xboxLY, 0);
 }
+
+void MyMecanumDrive::TankDrive(double xboxLY, double xboxRY)
+{
+    WheelFrontLeft.Set(xboxLY);
+    WheelBackLeft.Set(xboxLY);
+    WheelFrontRight.Set(xboxRY);
+    WheelBackRight.Set(xboxRY);
+}

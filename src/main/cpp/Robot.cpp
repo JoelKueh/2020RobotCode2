@@ -32,10 +32,12 @@ frc::Joystick Xbox {0};
 double xboxLX = 0;
 double xboxLY = 0;
 double xboxRX = 0;
+double xboxRY = 0;
 bool xboxA = false;
 bool xboxYRaw = false; 
 bool xboxYToggle = false;
 bool xboxRBSwitch = false;
+int xboxPOV = 0;
 
 frc::Joystick Yoke {1};
 double yokeX = 0;
@@ -115,27 +117,22 @@ void Robot::AutonomousPeriodic()
 //Runs once. What the robot does to initiate Teleop
 void Robot::TeleopInit()
 {
-
+  turret->PrepSmartDashboard();
+  turret->ResetRaiseEncoder();
 }
 
 //What the robot does when we gain controll
 void Robot::TeleopPeriodic()
 {
   //Loading the classes up to be used. Somewhat like calling a function.
-  myMecanumDrive->RunNormalWheels(xboxLX, xboxLY);
+  myMecanumDrive->RunNormalWheels(xboxRX, xboxLY);
+  // myMecanumDrive->TankDrive(xboxLY, xboxRY);
   // hanger->RunHanger(yokeUp, yokeDown, yokeLeft, yokeRight);
-  // manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
+  manualIntake->RunManualIntake(xboxA, xboxRBSwitch);
   
   // autoAim->RunAutoAim(); // TODO
   turret->RunManualTurret(xboxYToggle);
-
-  // if(xboxYToggle)
-  // {
-  //   pixyCam->GetStr();
-  //   pixyCam->GetValX();
-  //   pixyCam->GetValY();
-    
-  // }
+  turret->RaiseAndLowerTurret(xboxPOV);
 
   // NOT USING MECANUMS, DO NOT UNCOMMENT THIS FUNCTION
   // myMecanumDrive->RunMecanums(xboxLX, xboxLY, xboxRX);
@@ -143,6 +140,10 @@ void Robot::TeleopPeriodic()
   //Running a functions that read inputs and sets them to variables to save up resources.
   ReadXbox();
   //ReadYoke();
+
+  // Printing a couple values to the SmartDashboard
+  turret->DisplayToSmartDashboard();
+  turret->UpdateLimelight();
 }
 
 void Robot::TestPeriodic()
@@ -170,7 +171,14 @@ void Robot::ReadXbox()
     xboxRX = 0;
   }
 
-  // xboxPOV = Xbox.GetPOV();
+  xboxRY = Xbox.GetRawAxis(5);
+  if(xboxRY < .2 && xboxLY > -.2)
+  {
+    xboxRY = 0;
+  }
+
+  xboxPOV = Xbox.GetPOV();
+  std::cout << xboxPOV << std::endl;
 
   xboxA = Xbox.GetRawButton(1);
   

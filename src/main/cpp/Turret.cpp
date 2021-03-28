@@ -8,9 +8,17 @@
 #include <frc2/command/PIDSubsystem.h>
 #include <iostream>
 #include <frc/Digitalinput.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <networktables/NetworkTable.h>
+#include <networktables/NetworkTableInstance.h>
 
-//ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRaise {turretRaisePort};
-//ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRotate {turretRotatePort};
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRaise {WiringDiagram::turretRaisePort};
+double turretRaiseSetValue = 0;
+ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRotate {WiringDiagram::turretRotatePort};
+double turretRotateSetValue = 0;
+
+frc::DigitalInput turretRotateLeftLimit {WiringDiagram::leftTurretLimitPort};
+frc::DigitalInput turretRotateRightLimit {WiringDiagram::rightTurretLimitPort};
 
 // DEBUG
 // frc::DigitalInput TopA {WiringDiagram::launcherTopEncoderA};
@@ -23,56 +31,86 @@
 frc::VictorSP LauncherTopMotor {WiringDiagram::launcherTopPort};
 frc::VictorSP LauncherBottomMotor {WiringDiagram::launcherBottomPort};
 
-// 5 BLUE 6 Yellow
+// ? BLUE ? Yellow
 frc::Encoder LauncherTopEncoder(WiringDiagram::launcherTopEncoderA, 
     WiringDiagram::launcherTopEncoderB, 
     true, frc::CounterBase::EncodingType::k4X);
+double launcherTopDistance;
+double launcherTopRate;
+double kP_Top = 0.06;
+double kI_Top = 0.0;
+double kD_Top = 0.0;
 
-int launcherTopDistance;
-int launcherTopRate;
-
-// 0 BLUE 1 Yellow 
+// ? BLUE ? Yellow 
 frc::Encoder LauncherBottomEncoder(WiringDiagram::launcherBottomEncoderA, 
     WiringDiagram::launcherBottomEncoderB, 
     true, frc::CounterBase::EncodingType::k4X);
-
-int launcherBottomDistance;
-int launcherBottomRate;
+double launcherBottomDistance;
+double launcherBottomRate;
+double kP_Bottom = 0.06;
+double kI_Bottom = 0.0;
+double kD_Bottom = 0.0;
 
 // 14 Blue 15 Yellow
-frc::Encoder TurretRaiseEncoder(14, 15, true, frc::CounterBase::EncodingType::k4X);
-int turretRaiseDistance;
-int turretRaiseRate;
+frc::Encoder TurretRaiseEncoder(WiringDiagram::turretRaiseEncoderYellow,
+    WiringDiagram::turretRaiseEncoderGreen,
+    true, frc::CounterBase::EncodingType::k4X);
+double turretRaiseDistance;
+double turretRaiseRate;
+frc::DigitalInput turretRaiseLimit {WiringDiagram::turretRaiseLimitPort};
+
 
 // New, Good PID
-frc2::PIDController turretTopPID(1, 0, 0);
-frc2::PIDController turretBottomPID(1, 0, 0);
+frc2::PIDController turretTopPID(kP_Top, kI_Top, kD_Top);
+frc2::PIDController turretBottomPID(kP_Bottom, kI_Bottom, kD_Bottom);
+
+double kP_Raise = 1;
+double kI_Raise = 0.4;
+double kD_Raise = 0.1;
+double turretRaiseDistanceSet = 0;
+frc2::PIDController turretRaisePID(kP_Raise, kI_Raise, kD_Raise);
+
+double kP_Rotate = .05;
+double kI_Rotate = 0;
+double kD_Rotate = 0;
+frc2::PIDController turretRotatePID(kP_Rotate, kI_Rotate, kD_Rotate);
 
 int averageCount = 0;
 double averageTemporary = 0;
 double averageSpeed = 0;
 
 double topSetValue = 0;
+int topSetpoint = -3500;
+double topRate = 0;
+
 double bottomSetValue = 0;
+int bottomSetpoint = 2500;
+double bottomRate = 0;
+
+bool limelightDetected = false;
+double limelightXOffset = 0;
+double limelightYOffset = 0;
 
 Turret::Turret()
 {
-    //Setting required values for Top Encoder
+    // Setting required values for Top Encoder
     LauncherTopEncoder.SetDistancePerPulse(1./33.5051125);
     LauncherTopEncoder.SetMaxPeriod(.1);
-    LauncherTopEncoder.SetMinRate(1);
 
-    //Setting required values for Bottom Encoder
+    // Setting required values for Bottom Encoder
     LauncherBottomEncoder.SetDistancePerPulse(1./33.5051125);
     LauncherBottomEncoder.SetMaxPeriod(.1);
-    LauncherBottomEncoder.SetMinRate(1);
 
-    //Setting required values for Top PID
+    // Setting required values for Raise Encoder
+    TurretRaiseEncoder.SetDistancePerPulse(1/25.9);
+    TurretRaiseEncoder.SetMaxPeriod(1);
+
+    // Setting required values for Top PID
     turretTopPID.SetTolerance(50);
-
     turretBottomPID.SetTolerance(50);
 
- 
+    turretRotatePID.SetTolerance(2);
+    turretRaisePID.SetTolerance(0);
 }
 
 void Turret::RunAutoTurret()
@@ -82,13 +120,20 @@ void Turret::RunAutoTurret()
 
 void Turret::RunManualTurret(bool xboxYToggle)
 {
+    RunRaisePID(3 + -0.06 * limelightYOffset);
+    RunRotatePID();
     if(xboxYToggle)
     {
-        PersonalProportional();
+        topRate = LauncherTopEncoder.GetRate();
+        bottomRate = LauncherBottomEncoder.GetRate();
 
-        // PIDControll();
-        
+        // PersonalProportional();
 
+        turretTopPID.SetPID(kP_Top, kI_Top, kD_Top);
+        turretBottomPID.SetPID(kP_Bottom, kI_Bottom, kD_Bottom);
+        turretRaisePID.SetPID(kP_Raise, kI_Raise, kD_Raise);
+        turretRotatePID.SetPID(kP_Rotate, kI_Rotate, kD_Rotate);
+        PIDControll();
 
         // Debug
 
@@ -99,31 +144,24 @@ void Turret::RunManualTurret(bool xboxYToggle)
             averageCount = 0;
             averageTemporary = 0;
         }
-
-        // std::cout << "Raw Top: " << LauncherTopEncoder.GetRaw() << std::endl;
-        // std::cout << "Distance Top: " << LauncherTopEncoder.GetDistance() << std::endl;
-        // std::cout << "Get Top: " << averageSpeed << std::endl;
-        // std::cout << "Get Distance Per Pulse Top: " << LauncherTopEncoder.GetDistancePerPulse() << std::endl;
-
-        // std::cout << "Top A: " << TopA.Get() << std::endl;
-        // std::cout << "Top B: " << TopB.Get() << std::endl;
-
-        // LauncherBottomMotor.Set(.30);
-
-        // DEBUG
-        // std::cout << "Raw Bottom: " << LauncherBottomEncoder.GetRaw() << std::endl;
-        // std::cout << "Distance Bottom: " << LauncherBottomEncoder.Get() << std::endl;
-        // std::cout << "Get Bottom: " << LauncherBottomEncoder.GetRate() << std::endl;
-        // std::cout << "Get Distance Per Pulse Bottom: " << LauncherBottomEncoder.GetDistancePerPulse() << std::endl;
-
-        // std::cout << "Bottom A: " << BottomA.GetChannel() << std::endl;
-        // std::cout << "Bottom B: " << BottomB.GetChannel() << std::endl;
     }
     else
     {
         LauncherTopMotor.Set(0);
         LauncherBottomMotor.Set(0);
+
+        turretTopPID.Reset();
+        turretBottomPID.Reset();
     }
+}
+
+void Turret::RaiseAndLowerTurret(int xboxPOV)
+{
+    // if(xboxPOV == 0)
+    // {
+        // TurretRaise.Set(0);
+        // TurretRotate.Set(0);
+    // }
 }
 
 bool Turret::Aim()
@@ -139,37 +177,222 @@ double Turret::ProportionalController(double inputValue, double percentSpeed, do
 
 void Turret::PIDControll()
 {
-    turretTopPID.SetSetpoint(3000);
-    double temporaryTop = turretTopPID.Calculate(LauncherTopEncoder.GetRate()) / 100;
-    LauncherTopMotor.Set(temporaryTop);
-    std::cout << "Get Top PID: " << temporaryTop << std::endl;
-
-    turretBottomPID.SetSetpoint(3000);
-    double temporaryBottom = turretBottomPID.Calculate(LauncherBottomEncoder.GetRate()) / 100;
-    LauncherBottomMotor.Set(temporaryBottom);
-    std::cout << "Get Bottom PID: " << temporaryBottom << std::endl;
-}
-
-void Turret::PersonalProportional()
-{
-    int topRate = LauncherTopEncoder.GetRate();
-    int bottomRate = LauncherBottomEncoder.GetRate();
-
-    topSetValue = ProportionalController(topRate, topSetValue, -2000, .01);
+    turretTopPID.SetSetpoint(topSetpoint);
+    double temporaryTop = turretTopPID.Calculate(topRate);
+    topSetValue += temporaryTop;
         if(topSetValue > 0)
         {
             topSetValue = 0;
         }
+        if(topSetValue < -1)
+        {
+            topSetValue = -1;
+        }
+    LauncherTopMotor.Set(topSetValue);
 
-    bottomSetValue = ProportionalController(bottomRate, bottomSetValue, 2000, .01);
+    turretBottomPID.SetSetpoint(bottomSetpoint);
+    double temporaryBottom = turretBottomPID.Calculate(bottomRate);
+    bottomSetValue += temporaryBottom;
         if(bottomSetValue < 0)
         {
             bottomSetValue = 0;
+        }
+        if(bottomSetValue > 1)
+        {
+            bottomSetValue = 1;
+        }
+    LauncherBottomMotor.Set(bottomSetValue);
+}
+
+void Turret::PersonalProportional()
+{
+    topSetValue = ProportionalController(topRate, topSetValue, topSetpoint, kP_Top);
+        if(topSetValue > 0)
+        {
+            topSetValue = 0;
+        }
+        if(topSetValue < -1)
+        {
+            topSetValue = -1;
+        }
+
+    bottomSetValue = ProportionalController(bottomRate, bottomSetValue, bottomSetpoint, kP_Bottom);
+        if(bottomSetValue < 0)
+        {
+            bottomSetValue = 0;
+        }
+        if(bottomSetValue > 1)
+        {
+            bottomSetValue = 1;
         }
 
     LauncherTopMotor.Set(topSetValue);
     LauncherBottomMotor.Set(bottomSetValue);
 
-    std::cout << "Top Rate: " << topSetValue << " :: " << topRate << std::endl;
-    std::cout << "Bottom Rate: " << bottomSetValue << " :: " << bottomRate << std::endl;
+    // std::cout << "Top Rate: " << topSetValue << " :: " << topRate << std::endl;
+    // std::cout << "Bottom Rate: " << bottomSetValue << " :: " << bottomRate << std::endl;
+}
+
+void Turret::ResetRaiseEncoder()
+{
+    while(turretRaiseLimit.Get())
+    {
+        TurretRaise.Set(0.2);
+    }
+    TurretRaise.Set(0);
+    TurretRaiseEncoder.Reset();
+}
+
+void Turret::RunRaisePID(double distanceRotations)
+{
+    turretRaisePID.SetPID(kP_Raise, kI_Raise, kD_Raise);
+    
+    turretRaiseDistance = TurretRaiseEncoder.GetDistance();
+    turretRaisePID.SetSetpoint(distanceRotations);
+    turretRaiseSetValue = -turretRaisePID.Calculate(turretRaiseDistance);
+        if(turretRaiseSetValue > .75)
+        {
+            turretRaiseSetValue = .75;
+        }
+        if(turretRaiseSetValue < -.75)
+        {
+            turretRaiseSetValue = -.75;
+        }
+        if(!turretRaiseLimit.Get() || turretRaiseDistance < .25)
+        {
+            if(turretRaiseSetValue > 0)
+            {
+                turretRaiseSetValue = 0;
+            }
+        }
+
+    TurretRaise.Set(turretRaiseSetValue);
+}
+
+void Turret::RunRotatePID()
+{
+    if(limelightDetected)
+    {
+        turretRotatePID.SetSetpoint(-1);
+        turretRotateSetValue = turretRotatePID.Calculate(limelightXOffset);
+            if(turretRotateSetValue > .2)
+            {
+                turretRotateSetValue = .2;
+            }
+            if(turretRotateSetValue < -.2)
+            {
+                turretRotateSetValue = -.2;
+            }
+            if(!turretRotateLeftLimit.Get())
+            {
+                if(turretRotateSetValue > 0)
+                {
+                    turretRotateSetValue = 0;
+                }
+            }
+            if(!turretRotateRightLimit.Get())
+            {
+                if(turretRotateSetValue < 0)
+                {
+                    turretRotateSetValue = 0;
+                }
+            }
+
+        TurretRotate.Set(turretRotateSetValue);
+    }
+}
+
+void Turret::DisplayToSmartDashboard()
+{
+    frc::SmartDashboard::PutNumber("Top Rate", topRate);
+    frc::SmartDashboard::PutNumber("Bottom Rate", bottomRate);
+
+    frc::SmartDashboard::PutNumber("Top Set Value", topSetValue);
+    frc::SmartDashboard::PutNumber("Bottom Set Value", bottomSetValue);
+
+    frc::SmartDashboard::PutNumber("Turret Raise Limit", turretRaiseLimit.Get());
+    frc::SmartDashboard::PutNumber("Turret Left Limit", turretRotateLeftLimit.GetChannel());
+    frc::SmartDashboard::PutNumber("Turret Right Limit", turretRotateRightLimit.GetChannel());
+
+    frc::SmartDashboard::PutBoolean("Limelight Detected", limelightDetected);
+    frc::SmartDashboard::PutNumber("X Offset", limelightXOffset);
+    frc::SmartDashboard::PutNumber("Y Offset", limelightYOffset);
+
+    topSetpoint = frc::SmartDashboard::GetNumber("Top Setpoint", topSetpoint);
+    bottomSetpoint = frc::SmartDashboard::GetNumber("Bottom Setpoint", bottomSetpoint);
+
+    kP_Top = frc::SmartDashboard::GetNumber("kP Top", kP_Top);
+    kI_Top = frc::SmartDashboard::GetNumber("kI Top", kI_Top);
+    kD_Top = frc::SmartDashboard::GetNumber("kD Top", kD_Top);
+
+    kP_Bottom = frc::SmartDashboard::GetNumber("kP Bottom", kP_Bottom);
+    kI_Bottom = frc::SmartDashboard::GetNumber("kI Bottom", kI_Bottom);
+    kD_Bottom = frc::SmartDashboard::GetNumber("kD Bottom", kD_Bottom);
+
+    kP_Raise = frc::SmartDashboard::GetNumber("kP Raise", kP_Raise);
+    kI_Raise = frc::SmartDashboard::GetNumber("kI Raise", kI_Raise);
+    kD_Raise = frc::SmartDashboard::GetNumber("kD Raise", kD_Raise);
+    frc::SmartDashboard::PutNumber("Raise Distance", TurretRaiseEncoder.GetDistance());
+    turretRaiseDistanceSet = frc::SmartDashboard::GetNumber("Raise Set Distance", turretRaiseDistanceSet);
+
+    kP_Rotate = frc::SmartDashboard::GetNumber("kP Rotate", kP_Rotate);
+    kI_Rotate = frc::SmartDashboard::GetNumber("kI Rotate", kI_Rotate);
+    kD_Rotate = frc::SmartDashboard::GetNumber("kD Rotate", kD_Rotate);
+    frc::SmartDashboard::PutNumber("Rotate Set Value", turretRotateSetValue);
+
+    frc::SmartDashboard::PutNumber("Raise Set Value", turretRaiseSetValue);
+    int LEDMode = frc::SmartDashboard::GetNumber("Limelight LED Mode", 0);
+    nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("ledMode", LEDMode);
+}
+
+void Turret::PrepSmartDashboard()
+{
+    frc::SmartDashboard::PutNumber("Top Rate", topRate);
+    frc::SmartDashboard::PutNumber("Bottom Rate", bottomRate);
+
+    frc::SmartDashboard::PutNumber("Top Setpoint", topSetpoint);
+    frc::SmartDashboard::PutNumber("Bottom Setpoint", bottomSetpoint);
+    
+    frc::SmartDashboard::PutNumber("Turret Raise Limit", turretRaiseLimit.Get());
+    frc::SmartDashboard::PutNumber("Turret Raise Limit", turretRotateLeftLimit.Get());
+    frc::SmartDashboard::PutNumber("Turret Raise Limit", turretRotateRightLimit.Get());
+
+    frc::SmartDashboard::PutBoolean("Limelight Detected", limelightDetected);
+    frc::SmartDashboard::PutNumber("X Offset", limelightXOffset);
+    frc::SmartDashboard::PutNumber("Y Offset", limelightYOffset);
+
+    frc::SmartDashboard::PutNumber("kP Top", kP_Top);
+    frc::SmartDashboard::PutNumber("kI Top", kI_Top);
+    frc::SmartDashboard::PutNumber("kD Top", kD_Top);
+
+    frc::SmartDashboard::PutNumber("kP Bottom", kP_Bottom);
+    frc::SmartDashboard::PutNumber("kI Bottom", kI_Bottom);
+    frc::SmartDashboard::PutNumber("kD Bottom", kD_Bottom);
+
+    frc::SmartDashboard::PutNumber("kP Raise", kP_Raise);
+    frc::SmartDashboard::PutNumber("kI Raise", kI_Raise);
+    frc::SmartDashboard::PutNumber("kD Raise", kD_Raise);
+    frc::SmartDashboard::PutNumber("Raise Distance", turretRaiseDistance);
+    frc::SmartDashboard::PutNumber("Raise Set Distance", turretRaiseDistanceSet);
+    
+    frc::SmartDashboard::PutNumber("kP Rotate", kP_Rotate);
+    frc::SmartDashboard::PutNumber("kI Rotate", kI_Rotate);
+    frc::SmartDashboard::PutNumber("kD Rotate", kD_Rotate);
+    frc::SmartDashboard::PutNumber("Rotate Set Value", turretRotateSetValue);
+
+    frc::SmartDashboard::PutNumber("Raise Set Value", turretRaiseSetValue);
+
+    frc::SmartDashboard::PutNumber("Top Set Value", topSetValue);
+    frc::SmartDashboard::PutNumber("Bottom Set Value", bottomSetValue);
+
+    frc::SmartDashboard::PutNumber("Limelight LED Mode", 0);
+
+    nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("pipeline",1);
+}
+
+void Turret::UpdateLimelight()
+{
+    limelightDetected = nt::NetworkTableInstance::GetDefault().GetTable("limelight")->GetNumber("tv",0.0);
+    limelightXOffset = nt::NetworkTableInstance::GetDefault().GetTable("limelight")->GetNumber("tx",0.0);
+    limelightYOffset = nt::NetworkTableInstance::GetDefault().GetTable("limelight")->GetNumber("ty",0.0);
 }
