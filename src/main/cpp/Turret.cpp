@@ -11,11 +11,14 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/Timer.h>
 
 ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRaise {WiringDiagram::turretRaisePort};
 double turretRaiseSetValue = 0;
+double lastTurretRaiseSetValue = 0;
 ctre::phoenix::motorcontrol::can::WPI_TalonSRX TurretRotate {WiringDiagram::turretRotatePort};
 double turretRotateSetValue = 0;
+double lastTurretRotateSetValue = 0;
 
 frc::DigitalInput turretRotateLeftLimit {WiringDiagram::leftTurretLimitPort};
 frc::DigitalInput turretRotateRightLimit {WiringDiagram::rightTurretLimitPort};
@@ -65,7 +68,7 @@ frc2::PIDController turretTopPID(kP_Top, kI_Top, kD_Top);
 frc2::PIDController turretBottomPID(kP_Bottom, kI_Bottom, kD_Bottom);
 
 double kP_Raise = 1;
-double kI_Raise = 0.4;
+double kI_Raise = 0.2;
 double kD_Raise = 0.1;
 double turretRaiseDistanceSet = 0;
 frc2::PIDController turretRaisePID(kP_Raise, kI_Raise, kD_Raise);
@@ -91,6 +94,11 @@ bool limelightDetected = false;
 double limelightXOffset = 0;
 double limelightYOffset = 0;
 
+frc::Timer myTimer;
+long double currentTime = 0;
+long double lastRotateDirectionFlipTime = 0;
+long double lastRaiseDirectionFlipTime = 0;
+
 Turret::Turret()
 {
     // Setting required values for Top Encoder
@@ -102,15 +110,15 @@ Turret::Turret()
     LauncherBottomEncoder.SetMaxPeriod(.1);
 
     // Setting required values for Raise Encoder
-    TurretRaiseEncoder.SetDistancePerPulse(1/25.9);
+    TurretRaiseEncoder.SetDistancePerPulse(1/134.4);
     TurretRaiseEncoder.SetMaxPeriod(1);
 
     // Setting required values for Top PID
     turretTopPID.SetTolerance(50);
     turretBottomPID.SetTolerance(50);
 
-    turretRotatePID.SetTolerance(2);
-    turretRaisePID.SetTolerance(0);
+    turretRotatePID.SetTolerance(.25);
+    turretRaisePID.SetTolerance(.06);
 }
 
 void Turret::RunAutoTurret()
@@ -118,10 +126,27 @@ void Turret::RunAutoTurret()
 
 }
 
-void Turret::RunManualTurret(bool xboxYToggle)
+void Turret::RunManualTurret(bool xboxYToggle, bool xboxLBSwitch)
 {
-    RunRaisePID(3 + -0.06 * limelightYOffset);
-    RunRotatePID();
+    myTimer.Start();
+    currentTime = myTimer.Get();
+
+    if(xboxLBSwitch)
+    {
+        double tempOne = limelightYOffset + 7;
+        double tempTwo = tempOne * tempOne;
+        RunRaisePID(-0.005 * tempTwo + 3.65);
+        // RunRaisePID(turretRaiseDistanceSet);
+        RunRotatePID();   
+        nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("ledMode", 0);
+    }
+    else
+    {
+        TurretRaise.Set(0);
+        TurretRotate.Set(0);
+        nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("ledMode", 0);
+    }
+
     if(xboxYToggle)
     {
         topRate = LauncherTopEncoder.GetRate();
@@ -144,6 +169,9 @@ void Turret::RunManualTurret(bool xboxYToggle)
             averageCount = 0;
             averageTemporary = 0;
         }
+
+        // LauncherTopMotor.Set(-1);
+        // LauncherBottomMotor.Set(1);
     }
     else
     {
@@ -237,7 +265,7 @@ void Turret::ResetRaiseEncoder()
 {
     while(turretRaiseLimit.Get())
     {
-        TurretRaise.Set(0.2);
+        TurretRaise.Set(0.6);
     }
     TurretRaise.Set(0);
     TurretRaiseEncoder.Reset();
@@ -250,13 +278,13 @@ void Turret::RunRaisePID(double distanceRotations)
     turretRaiseDistance = TurretRaiseEncoder.GetDistance();
     turretRaisePID.SetSetpoint(distanceRotations);
     turretRaiseSetValue = -turretRaisePID.Calculate(turretRaiseDistance);
-        if(turretRaiseSetValue > .75)
+        if(turretRaiseSetValue > 1)
         {
-            turretRaiseSetValue = .75;
+            turretRaiseSetValue = 1;
         }
-        if(turretRaiseSetValue < -.75)
+        if(turretRaiseSetValue < -1)
         {
-            turretRaiseSetValue = -.75;
+            turretRaiseSetValue = -1;
         }
         if(!turretRaiseLimit.Get() || turretRaiseDistance < .25)
         {
@@ -265,15 +293,39 @@ void Turret::RunRaisePID(double distanceRotations)
                 turretRaiseSetValue = 0;
             }
         }
+        
+        TurretRaise.Set(turretRaiseSetValue);
 
-    TurretRaise.Set(turretRaiseSetValue);
+        // if(currentTime > lastRaiseDirectionFlipTime + .1)
+        // {
+            // if(lastTurretRaiseSetValue > 0 && turretRaiseSetValue > 0)
+            // {
+            //     TurretRaise.Set(turretRaiseSetValue);
+            //     lastTurretRaiseSetValue = turretRaiseSetValue;
+            // }
+            // else if(lastTurretRaiseSetValue < 0 && turretRaiseSetValue < 0)
+            // {
+            //     TurretRotate.Set(turretRaiseSetValue);
+            //     lastTurretRaiseSetValue = turretRaiseSetValue;
+            // }
+            // else
+            // {
+            //     lastTurretRaiseSetValue = turretRaiseSetValue;
+            //     lastRaiseDirectionFlipTime = currentTime;
+            // }
+        // }
+        // else
+        // {
+            // TurretRaise.Set(0);
+        // }
+        
 }
 
 void Turret::RunRotatePID()
 {
     if(limelightDetected)
     {
-        turretRotatePID.SetSetpoint(-1);
+        turretRotatePID.SetSetpoint(1.5);
         turretRotateSetValue = turretRotatePID.Calculate(limelightXOffset);
             if(turretRotateSetValue > .2)
             {
@@ -298,7 +350,31 @@ void Turret::RunRotatePID()
                 }
             }
 
-        TurretRotate.Set(turretRotateSetValue);
+            
+            TurretRotate.Set(turretRotateSetValue);
+    
+        // if(currentTime > lastRotateDirectionFlipTime + .1)
+        // {
+            // if(lastTurretRotateSetValue > 0 && turretRotateSetValue > 0)
+            // {
+            //     lastTurretRotateSetValue = turretRotateSetValue;
+            // }
+            // else if(lastTurretRotateSetValue < 0 && turretRotateSetValue < 0)
+            // {
+            //     TurretRotate.Set(turretRotateSetValue);
+            //     lastTurretRotateSetValue = turretRotateSetValue;
+            // }
+            // else
+            // {
+            //     lastTurretRotateSetValue = turretRotateSetValue;
+            //     lastRotateDirectionFlipTime = currentTime;
+            // }
+        // }
+        // else
+        // {
+            // TurretRotate.Set(0);
+        // }
+        
     }
 }
 
@@ -311,8 +387,8 @@ void Turret::DisplayToSmartDashboard()
     frc::SmartDashboard::PutNumber("Bottom Set Value", bottomSetValue);
 
     frc::SmartDashboard::PutNumber("Turret Raise Limit", turretRaiseLimit.Get());
-    frc::SmartDashboard::PutNumber("Turret Left Limit", turretRotateLeftLimit.GetChannel());
-    frc::SmartDashboard::PutNumber("Turret Right Limit", turretRotateRightLimit.GetChannel());
+    frc::SmartDashboard::PutNumber("Turret Left Limit", turretRotateLeftLimit.Get());
+    frc::SmartDashboard::PutNumber("Turret Right Limit", turretRotateRightLimit.Get());
 
     frc::SmartDashboard::PutBoolean("Limelight Detected", limelightDetected);
     frc::SmartDashboard::PutNumber("X Offset", limelightXOffset);
@@ -342,7 +418,7 @@ void Turret::DisplayToSmartDashboard()
 
     frc::SmartDashboard::PutNumber("Raise Set Value", turretRaiseSetValue);
     int LEDMode = frc::SmartDashboard::GetNumber("Limelight LED Mode", 0);
-    nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("ledMode", LEDMode);
+    // nt::NetworkTableInstance::GetDefault().GetTable("limelight")->PutNumber("ledMode", LEDMode);
 }
 
 void Turret::PrepSmartDashboard()

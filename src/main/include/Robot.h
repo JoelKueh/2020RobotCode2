@@ -24,4 +24,6 @@ class Robot : public frc::TimedRobot {
 
   void ReadXbox();
   void ReadYoke();
+  bool ReadAndRunCustomAuto(double sArray[], double dArray[], double tArray[], int tArraySize);
+
 };

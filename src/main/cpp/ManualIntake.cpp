@@ -4,7 +4,7 @@
 #include <frc/Relay.h>
 #include <frc/VictorSP.h>
 
-frc::Relay IntakeMotor {2, frc::Relay::kForwardOnly};
+frc::Relay IntakeMotor {2};
 
 frc::Solenoid IntakeOut {0};
 frc::Solenoid IntakeIn {1};
@@ -18,23 +18,27 @@ ManualIntake::ManualIntake()
     IntakeIn.SetPulseDuration(.1);
 }
 
-void ManualIntake::RunManualIntake(bool xboxA, bool xboxRBSwitch)
+void ManualIntake::RunManualIntake(bool xboxA, bool xboxRB, bool xboxRTrBool)
 {
-    if(xboxRBSwitch)
+    if(xboxRB)
     {
-        IntakeOut.StartPulse();
-        IntakeMotor.Set(frc::Relay::kOn);
+        // IntakeOut.StartPulse();
+        IntakeMotor.Set(frc::Relay::kForward);
+    }
+    else if(xboxRTrBool)
+    {
+        IntakeMotor.Set(frc::Relay::kReverse);
     }
     else
     {
-        IntakeIn.StartPulse();
+        // IntakeIn.StartPulse();
         IntakeMotor.Set(frc::Relay::kOff);
     }
 
     if(xboxA)
     {
         ElevatorTop.Set(-.6);
-        ElevatorBottom.Set(.6);
+        ElevatorBottom.Set(-.6);
     }
     else
     {

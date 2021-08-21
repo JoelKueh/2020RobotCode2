@@ -6,7 +6,7 @@ class Turret
  public:
   Turret();
   void RunAutoTurret();
-  void RunManualTurret(bool xboxYToggle);
+  void RunManualTurret(bool xboxYToggle, bool xboxLBSwitch);
   bool Aim();
   void RaiseAndLowerTurret(int xboxPOV);
   void DisplayToSmartDashboard();

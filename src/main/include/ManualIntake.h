@@ -4,5 +4,5 @@
 class ManualIntake {
  public:
   ManualIntake();
-  void RunManualIntake(bool xboxA, bool xboxRB);
+  void RunManualIntake(bool xboxA, bool xboxRB, bool xboxRTrBool);
 };
